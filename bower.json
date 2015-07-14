@@ -1,0 +1,27 @@
+{
+  "name": "jquery-http",
+  "version": "1.0.0",
+  "authors": [
+    "Ivan Lucin <lucin.ivan@gmail.com>"
+  ],
+  "description": "Simple wrapper around jquery's ajax",
+  "main": "jquery-http.js",
+  "moduleType": [
+    "amd",
+    "globals"
+  ],
+  "keywords": [
+    "http",
+    "ajax",
+    "jquery"
+  ],
+  "license": "MIT",
+  "homepage": "github.io/ilucin/jquery-http",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
