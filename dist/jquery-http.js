@@ -1,19 +1,24 @@
-(function() {
+(function(root) {
   'use strict';
 
-  var _ = {
-    defaults: function(obj, data) {
-      for (var key in data) {
-        if (!obj[key]) {
-          obj[key] = data[key];
-        }
-      }
-      return obj;
-    }
-  };
+  var previousJQueryHttp = root.JQueryHttp;
 
-  var activeRequests = {};
-  var config = {
+  function assignDefaults(obj, data) {
+    for (var key in data) {
+      if (!obj[key]) {
+        obj[key] = data[key];
+      }
+    }
+    return obj;
+  }
+
+  function call(obj, method, ctx, args) {
+    if (obj && typeof obj[method] === 'function') {
+      obj[method].apply(ctx || window, args);
+    }
+  }
+
+  var defaultConfig = {
     defaultParams: null,
     isMockMode: false,
     mockRoot: '',
@@ -21,102 +26,99 @@
     apiRoot: ''
   };
 
-  function setup(opts) {
-    for (var key in opts) {
-      config[key] = opts[key];
-    }
-  }
-
-  function createUrl(opts) {
+  var createUrl = function(opts) {
     var url, route, urlParams;
+    var serverRoot = this.config.serverRoot;
+    var apiRoot = this.config.apiRoot;
+    var mockRoot = this.config.mockRoot;
 
     opts = opts || {};
 
     if (!opts.noDefaultParams) {
-      opts.params = _.defaults(opts.params || {}, config.defaultParams);
+      opts.params = assignDefaults(opts.params || {}, this.config.defaultParams);
     }
 
-    if (opts.mock && config.isMockMode) {
-      url = config.mockRoot + '/' + opts.mock + (opts.mock.indexOf('.json') >= 0 ? '' : '.json');
+    if (opts.mock && this.config.isMockMode) {
+      url = (mockRoot || '') + opts.mock + (opts.mock.indexOf('.json') >= 0 ? '' : '.json');
     } else {
       route = opts.route;
       urlParams = [];
 
       for (var key in opts.params) {
-        if (route.indexOf(':' + key) >= 0) {
-          route = route.replace(':' + key, opts.params[key]);
-        } else {
-          urlParams.push(key + '=' + opts.params[key]);
+        if (opts.params.hasOwnProperty(key)) {
+          if (route.indexOf(':' + key) >= 0) {
+            route = route.replace(':' + key, opts.params[key]);
+          } else {
+            urlParams.push(key + '=' + opts.params[key]);
+          }
         }
       }
 
-      url = config.serverRoot + config.apiRoot + '/' + route + (urlParams.length > 0 ? '?' + urlParams.join('&') : '');
+      url = (serverRoot || '') + (apiRoot || '') + route + (urlParams.length > 0 ? '?' + urlParams.join('&') : '');
     }
 
     return url;
-  }
+  };
 
   function createRequestKey(opts) {
     return opts.requestKey || opts.url;
   }
 
-  function httpRequest(opts) {
+  var httpRequest = function(opts) {
+    var self = this;
+
     if (typeof opts.url === 'object') {
-      opts.url = createUrl(opts.url);
+      opts.url = this.url(opts.url);
     }
 
     if (opts.requestKey) {
-      abortRequest(opts.requestKey);
+      this.abortRequest(opts.requestKey);
     }
 
-    // Force GET when in mock mode
-    if (config.isMockMode) {
+    if (this.config.isMockMode) {
       opts.method = 'GET';
     }
 
     return new Promise(function(resolve, reject) {
-      var xhr = $.ajax(_.defaults({
+      var ajaxOpts = assignDefaults({
         complete: function() {
-          if (opts.requestKey && activeRequests[opts.requestKey]) {
-            delete activeRequests[opts.requestKey];
+          if (opts.requestKey && self.activeRequests[opts.requestKey]) {
+            delete self.activeRequests[opts.requestKey];
           }
-          if (opts.complete) {
-            opts.complete.apply(opts.context || this, arguments);
-          }
+          call(opts, 'complete', opts.context || self, arguments);
         },
-        success: resolve,
-        error: reject
-      }, opts));
+        success: function() {
+          call(opts, 'success', opts.context || self, arguments);
+          resolve.apply(this, arguments);
+        },
+        error: function() {
+          call(opts, 'error', opts.context || self, arguments);
+          reject.apply(this, arguments);
+        }
+      }, opts);
 
-      activeRequests[createRequestKey(opts)] = xhr;
+      var xhr = $.ajax(ajaxOpts);
+
+      self.activeRequests[createRequestKey(opts)] = xhr;
     });
+  };
+
+  function JQueryHttp(opts) {
+    this.config = {};
+    this.activeRequests = {};
+    this.setup(assignDefaults(opts || {}), defaultConfig);
   }
 
-  function abortRequest(requestKey) {
-    if (activeRequests && activeRequests[requestKey]) {
-      console.log('Aborting request with same key:', requestKey);
-      activeRequests[requestKey].abort();
-      activeRequests[requestKey] = undefined;
-    }
-  }
-
-  var request = function(method, route, params, data) {
-    if (arguments.length === 1) {
-      return httpRequest.apply(this, arguments);
-    } else {
-      return httpRequest.call(this, {
-        url: {
-          route: route,
-          params: params
-        },
-        method: method,
-        data: data
-      });
+  JQueryHttp.prototype.setup = function(opts) {
+    for (var key in opts) {
+      if (opts.hasOwnProperty(key)) {
+        this.config[key] = opts[key];
+      }
     }
   };
 
-  var url = function(route, params, mock) {
-    if (arguments.length === 1) {
+  JQueryHttp.prototype.url = function(route, params, mock) {
+    if (typeof route === 'object') {
       return createUrl.apply(this, arguments);
     } else {
       return createUrl.call(this, {
@@ -127,18 +129,36 @@
     }
   };
 
-  var http = {
-    setup: setup,
-    url: url,
-    request: request,
-    abortRequest: abortRequest
+  JQueryHttp.prototype.request = function(method, route, params, data, opts) {
+    if (typeof method === 'object') {
+      return httpRequest.apply(this, arguments);
+    } else {
+      return httpRequest.call(this, assignDefaults({
+        url: {
+          route: route,
+          params: params
+        },
+        method: method,
+        data: data
+      }, opts));
+    }
   };
 
-  if (typeof window.define === 'function') {
-    window.define(function() {
-      return http;
-    });
+  JQueryHttp.prototype.abortRequest = function(requestKey) {
+    if (this.activeRequests && this.activeRequests[requestKey]) {
+      this.activeRequests[requestKey].abort();
+      this.activeRequests[requestKey] = undefined;
+    }
+  };
+
+  JQueryHttp.noConflict = function() {
+    root.JQueryHttp = previousJQueryHttp;
+    return JQueryHttp;
+  };
+
+  if (typeof exports !== 'undefined') {
+    exports = JQueryHttp;
   } else {
-    window.http = http;
+    root.JQueryHttp = JQueryHttp;
   }
-})();
+})(this);
