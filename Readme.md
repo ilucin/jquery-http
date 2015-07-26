@@ -15,7 +15,7 @@ Don't worry, it also works as a drop-in replacement for $.ajax.
  bower install -S jquery-http
  ```
 
-## Example usage:
+## Example usage
 
 First instantiate and setup your http wrapper:
 ```javascript
@@ -185,18 +185,24 @@ http.abortRequest('users');
 
 ## API Documentation
 
+### constructor
+```javascript
+// opts: object => passed to http.setup()
+http = new JQueryHttp(opts);
+```
+
 #### http.setup()
 Used to initialize the wrapper instance. Setup method is invoked either via constructor or manually.
 
 Default configuration:
 ```javascript
 http.setup({
-  defaultParams: null,
-  abortEquivalentRequests: true,
-  isMockMode: false,
-  mockRoot: '',
-  serverRoot: '',
-  apiRoot: ''
+  defaultParams: null,  // Default params for http.url() helper
+  abortEquivalentRequests: true,  // Flag to enable/disable abort equivalent requests behavior
+  isMockMode: false,  // Flag to enable/disable mock mode
+  mockRoot: '', // A route to mock data directory
+  serverRoot: '', // Server root url
+  apiRoot: '' // API root prefix for urls
 });
 ```
 
@@ -220,19 +226,19 @@ http.url(route, params, mock);
 ```
 
 #### http.request()
-Perform a request (call to $.ajax). Returns Promise.
+Perform a request (call to $.ajax). Returns a Promise.
 
 ```javascript
 http.request({
-  url: object || string // Object that will be passed to http.url() helper or directly URL string
-  requestKey: string // Optional
-  // ... all other standard $.ajax options
+  url: object || string, // If object - it's passed to http.url()
+  requestKey: string, // Optional
+  ... // all other standard $.ajax options
 });
 ```
 
 Shorter syntax:
 ```javascript
-// method: string => 'GET' ..
+// method: string => 'GET'
 // route: string => 'users/:id'
 // urlParams: object (optional) => { id: 5 }
 // data: object (optional) => $.ajax data (for POST request for example)
@@ -258,4 +264,4 @@ If you need to run this library in no-conflict mode just call this method in the
 * Handle serverRoot, apiRoot and url route concatenation so user don't have to think about leading and trailing slashes
 
 ## Contribution
-If you like this library but you think it can be improved, feel free to [open an issue](https://github.com/ilucin/jquery-http/issues/new) or [submit a pull request](https://github.com/ilucin/jquery-http/pulls). I'm open to adding new features. :)
+If you like this library but you think it can be improved, feel free to [open an issue](https://github.com/ilucin/jquery-http/issues/new) or [submit a pull request](https://github.com/ilucin/jquery-http/pulls). I'm open to adding new features.
