@@ -32,7 +32,7 @@ http.request({
   url: {
     route: 'user/:id/profile',
     params: {
-      id: user.id
+      id: 5
     }
   },
   method: 'GET',
@@ -42,7 +42,7 @@ http.request({
 }, function(err) {
   console.log(err);
 });
-// Will fire a request to http://mysite.com/api/v1/user/:id/profile
+// Will fire a request to http://mysite.com/api/v1/user/5/profile
 ```
 
 or event simpler:
@@ -63,7 +63,7 @@ Usually, you want to setup your API configuration only once and use it from the 
 With **JQueryHttp** you can create a configured instance for all of that:
 
 ```javascript
-http.setup({
+var http = new JQueryHttp({
   defaultParams: {
     lang: 'en'
   },
@@ -88,7 +88,7 @@ http.url({
 URL helper supports convenient ":param" syntax for injecting parameters.
 
 ### Returns Promises/A+ compliant promise instead of jquery deferred
-What I've always hated about Jquery is their non-standard Promise implementation. This wrapper returns a native promise instead of jquery deffered promise object. If you need a good, small (Promises/A+ compliant) library to polyfill the native Promise - you can use lie.js
+What I've always hated about Jquery is their non-standard Promise implementation. This wrapper returns a native promise instead of jquery deffered promise object. If you need a good, small (Promises/A+ compliant) library to polyfill the native Promise - you can use [lie.js](https://github.com/calvinmetcalf/lie) or similar.
 
 So, now you can do something like this:
 ```javascript
@@ -151,7 +151,7 @@ http.request({
   console.log('We got mocked data here:', response);
 });
 
-// This example will load content of /data/mock/user.json into the response if isMockMode === true
+// This will load content of /data/mock/user.json into the response
 ```
 
 This also works for POST, PATCH, PUT and DELETE requests (library is always forcing GET in mock mode).
@@ -186,12 +186,66 @@ http.abortRequest('users');
 ## API Documentation
 
 #### http.setup()
+Used to initialize the wrapper instance. Setup method is invoked either via constructor or manually.
+
+Default configuration:
+```javascript
+http.setup({
+  defaultParams: null,
+  abortEquivalentRequests: true,
+  isMockMode: false,
+  mockRoot: '',
+  serverRoot: '',
+  apiRoot: ''
+});
+```
 
 #### http.url()
+Create URL for the request. Returns URL string.
+
+```javascript
+http.url({
+  route: string, // A route string that accepts :param syntax as data placeholder
+  params: object, // Params that will be injected either as route or query params
+  mock: string // Path to mock file for the request
+});
+```
+
+Shorter syntax:
+```javascript
+// route: string => 'users/:id'
+// params: object (optional) => { id: 5 }
+// mock: string (optional) => 'users'
+http.url(route, params, mock);
+```
 
 #### http.request()
+Perform a request (call to $.ajax). Returns Promise.
+
+```javascript
+http.request({
+  url: object || string // Object that will be passed to http.url() helper or directly URL string
+  requestKey: string // Optional
+  // ... all other standard $.ajax options
+});
+```
+
+Shorter syntax:
+```javascript
+// method: string => 'GET' ..
+// route: string => 'users/:id'
+// urlParams: object (optional) => { id: 5 }
+// data: object (optional) => $.ajax data (for POST request for example)
+// opts: object (optional) => All other standard $.ajax options
+http.request(method, route, urlParams, data, opts);
+```
 
 #### http.abortRequest()
+Abort a request with the given **requestKey**.
+```javascript
+// requestKey: string
+http.abortRequest(requestKey);
+```
 
 #### http.noConflict()
 If you need to run this library in no-conflict mode just call this method in the initialization process. You will get back your old JQueryHttp object to global scope and the new one will be returned from the function call.
@@ -204,4 +258,4 @@ If you need to run this library in no-conflict mode just call this method in the
 * Handle serverRoot, apiRoot and url route concatenation so user don't have to think about leading and trailing slashes
 
 ## Contribution
-If you like this library but you think it can be improved, feel free to open an issue or submit a pull request here on github. I'm open to adding new cool features. :)
+If you like this library but you think it can be improved, feel free to [open an issue](https://github.com/ilucin/jquery-http/issues/new) or [submit a pull request](https://github.com/ilucin/jquery-http/pulls). I'm open to adding new features. :)
