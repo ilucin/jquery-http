@@ -20,6 +20,7 @@
 
   var defaultConfig = {
     defaultParams: null,
+    abortEquivalentRequests: true,
     isMockMode: false,
     mockRoot: '',
     serverRoot: '',
@@ -71,7 +72,7 @@
       opts.url = this.url(opts.url);
     }
 
-    if (opts.requestKey) {
+    if (!!this.config.abortEquivalentRequests && opts.requestKey) {
       this.abortRequest(opts.requestKey);
     }
 
