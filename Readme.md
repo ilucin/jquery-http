@@ -1,8 +1,8 @@
-# jQuery HTTP
+# JQueryHttp
 
 A simple wrapper for jquery's ajax that provides few convenient features.
 
-It works as a drop-in replacement for $.ajax.
+Don't worry, it also works as a drop-in replacement for $.ajax.
 
 ## Instalation
 
@@ -55,7 +55,7 @@ http.request('GET', 'users/:id', { id: user.id }).then(function(response) {
 http.request('POST', 'users/:id', { id: user.id }, { name: 'Ivan'} );
 ```
 
-## Plugin features
+## Main features / Why would you use it?
 
 ### Setup default API endpoint and query parameters
 Usually, you want to setup your API configuration only once and use it from the rest of your app - to keep things DRY. Sometimes you need to use default query params for every request, like language or token. Or you need to use and handle multiple versions of your API.
@@ -73,7 +73,7 @@ http.setup({
 ```
 
 ### URL creation helper
-Sometimes you only need to generate URL for a request and you want to use the same configuration you defined earlier.
+Sometimes you only need to generate URL for a request and you want to reuse the same configuration you defined earlier. For example, in Backbone, if you want to use integrated Backbone.sync mechanism that's performing http requests for your models and collections.  
 
 ```javascript
 http.url({
@@ -88,18 +88,120 @@ http.url({
 URL helper supports convenient ":param" syntax for injecting parameters.
 
 ### Returns Promises/A+ compliant promise instead of jquery deferred
-What I've always hated about Jquery is their non-standard Promise implementation. This wrapper returns Promises/A+ compliant promise instead of jquery deffered promise object.
+What I've always hated about Jquery is their non-standard Promise implementation. This wrapper returns a native promise instead of jquery deffered promise object. If you need a good, small (Promises/A+ compliant) library to polyfill the native Promise - you can use lie.js
+
+So, now you can do something like this:
+```javascript
+http.request('GET', 'users/5')
+  .then(function(response) {
+    console.log('We got user 5');
+    return http.request('GET', 'users/5/cars');
+  })
+  .then(function(response) {
+    console.log('We got user cars');
+    return http.request('GET', 'users/5/cars/1');
+  })
+  .then(function(response) {
+    console.log('We got car 1');
+  })
+  .catch(function(err) {
+    console.log('We got an error:', err);
+  });
+```
+
+... or this:
+
+```javascript
+Promise.all([
+  http.request('GET', 'users/5'),
+  http.request('GET', 'users/5/cars'),
+  http.request('GET', 'users/5/cars/1')
+]).then(function(responses) {
+  console.log('All responses', responses);
+}, function(err) {
+  console.log('Error:', err);
+})
+```
 
 ### Loading local mock data
-TODO
+When developing new client-side apps, you often don't have an API ready but you want to start working on the client code. In these cases, I tend to setup mocked json responses for every future API call and instead of connecting to the server just load all the mock data from the filesystem. JQueryHttp wrapper is simplifying this process so later, when you get your API, you can just switch one configuration flag and everything works.
+
+You would be suprised how far can you get developing your app just by using mocked data. This approach can also make the client-side testing much easier to perform.
+
+First configure the http instance to use mock data and define root directory where mocked data is stored:
+```javascript
+http.setup({
+  isMockMode: true,
+  mockRoot: '/data/mock/'
+})
+```
+
+Then write your requests just as you usually would but but add another parameter that defines the file for mock response:
+```javascript
+http.request({
+  method: 'GET',
+  url: {
+    mock: 'user',
+    route: '/users/:id',
+    params: {
+      id: 5
+    }
+  }
+}).then(function(response) {
+  console.log('We got mocked data here:', response);
+});
+
+// This example will load content of /data/mock/user.json into the response if isMockMode === true
+```
+
+This also works for POST, PATCH, PUT and DELETE requests (library is always forcing GET in mock mode).
 
 ### Aborting multiple equivalent requests
-TODO
+There are use cases when you're doing a lot of equivalent requests and it only makes sense to complete the last one. For example, when performing a search on the client and the user types really fast. Of course, you should still use throttling (or debouncing) for keyboard event handlers but I've still found this feature very usefull.
+
+When you try to perform a request, the last one with the same **requestKey** will be aborted if it hadn't finished yet.
+
+You can either explictly define a **requestKey** or it will be implicitly generated from the URL. Example:
+
+```javascript
+http.request({
+  method: 'GET',
+  url: '/users',
+  requestKey: 'users'
+})
+```
+
+You can disable this behavior by doing (it's on by default):
+```javascript
+http.setup({
+  abortEquivalentRequests: false
+})
+```
+
+You can also manually abort a request with a given **requestKey** using this:
+```javascript
+http.abortRequest('users');
+```
 
 ## API Documentation
 
 #### http.setup()
 
+#### http.url()
+
+#### http.request()
+
+#### http.abortRequest()
+
+#### http.noConflict()
+If you need to run this library in no-conflict mode just call this method in the initialization process. You will get back your old JQueryHttp object to global scope and the new one will be returned from the function call.
 
 ## Important Notes
-**Browser support:** This library is using native Promise implementation so you **should** have a Promises/A+ compliant polyfill loaded if you want this to work in older browsers. Well you should do it anyway and use promises! :)
+**Browser support:** This library is using native Promise implementation so you **should** have a Promises/A+ compliant polyfill loaded if you want this to work in older browsers. Well, you should do it anyway and use promises instead of callbacks! :)
+
+## TODOs
+* Better test coverage
+* Handle serverRoot, apiRoot and url route concatenation so user don't have to think about leading and trailing slashes
+
+## Contribution
+If you like this library but you think it can be improved, feel free to open an issue or submit a pull request here on github. I'm open to adding new cool features. :)
