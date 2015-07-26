@@ -148,7 +148,7 @@
   JQueryHttp.prototype.abortRequest = function(requestKey) {
     if (this.activeRequests && this.activeRequests[requestKey]) {
       this.activeRequests[requestKey].abort();
-      this.activeRequests[requestKey] = undefined;
+      delete this.activeRequests[requestKey];
     }
   };
 
