@@ -16,7 +16,7 @@
     "jquery"
   ],
   "license": "MIT",
-  "homepage": "github.io/ilucin/jquery-http",
+  "homepage": "https://github.com/ilucin/jquery-http",
   "ignore": [
     "**/.*",
     "node_modules",
