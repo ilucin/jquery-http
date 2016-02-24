@@ -2,3 +2,4 @@
 
 node_modules
 spec/lib
+npm-debug.log
