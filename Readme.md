@@ -11,8 +11,13 @@ Don't worry, it also works as a drop-in replacement for $.ajax.
 ```
 
  Bower package:
- ```javascript
+ ```
  bower install -S jquery-http
+ ```
+
+ NPM module:
+ ```
+ npm install --save jquery-http
  ```
 
 ## Example usage

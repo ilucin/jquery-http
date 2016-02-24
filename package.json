@@ -2,21 +2,25 @@
   "name": "jquery-http",
   "version": "1.0.0",
   "description": "Simple wrapper around jquery's ajax",
-  "main": "main.js",
-  "scripts": {
-    "test": "test.js"
-  },
+  "main": "dist/jquery-http.min.js",
+
+  "author": "Ivan Lucin",
+  "license": "MIT",
+
   "repository": {
     "type": "git",
-    "url": "git@github.com:ilucin/jquery-http.git"
+    "url": "https://github.com/ilucin/jquery-http.git"
   },
+  "bugs": {
+    "url": "https://github.com/ilucin/jquery-http/issues"
+  },
+
   "keywords": [
     "http",
     "request",
     "jquery"
   ],
-  "author": "lucin.ivan@gmail.com",
-  "license": "MIT",
+
   "devDependencies": {
     "grunt": "^0.4.5",
     "grunt-contrib-clean": "^0.6.0",
